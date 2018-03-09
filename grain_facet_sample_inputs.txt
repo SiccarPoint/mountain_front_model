@@ -1,20 +1,25 @@
 # Input file template for Grain Facet model
 number_of_node_rows:
 20
+# 80
 number_of_node_columns:
 31
+# 121
 report_interval: time interval for reporting output to user (real-time seconds)
 5.0
 run_duration:
-120.0
+120.
+# 1000.0
 output_interval:
 1.0e99
 disturbance_rate:
 0.01
 weathering_rate:
 0.002
+# 0.02
 uplift_interval:
 10.0
+# 50.0
 plot_interval:
 6.0
 friction_coef:
