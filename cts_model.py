@@ -10,6 +10,7 @@ from numpy import random
 from landlab.io.native_landlab import save_grid
 from landlab.ca.celllab_cts import Transition, CAPlotter
 from matplotlib.pyplot import axis
+import numpy as np
 
 
 class CTSModel(object):
@@ -72,19 +73,21 @@ class CTSModel(object):
         # Create the transition list
         xn_list = self.transition_list()
 
+        props = self.grid.add_zeros('node', 'props', dtype=float)
+
         # Create the CA object
         if cts_type == 'raster':
             from landlab.ca.raster_cts import RasterCTS
-            self.ca = RasterCTS(self.grid, ns_dict, xn_list, nsg)
+            self.ca = RasterCTS(self.grid, ns_dict, xn_list, nsg, prop_data=props, prop_reset_value=0.)
         elif cts_type == 'oriented_raster':
             from landlab.ca.oriented_raster_cts import OrientedRasterCTS
-            self.ca = OrientedRasterCTS(self.grid, ns_dict, xn_list, nsg)
+            self.ca = OrientedRasterCTS(self.grid, ns_dict, xn_list, nsg, prop_data=props, prop_reset_value=0.)
         elif cts_type == 'hex':
             from landlab.ca.hex_cts import HexCTS
-            self.ca = HexCTS(self.grid, ns_dict, xn_list, nsg)
+            self.ca = HexCTS(self.grid, ns_dict, xn_list, nsg, prop_data=props, prop_reset_value=0.)
         else:
             from landlab.ca.oriented_hex_cts import OrientedHexCTS
-            self.ca = OrientedHexCTS(self.grid, ns_dict, xn_list, nsg)
+            self.ca = OrientedHexCTS(self.grid, ns_dict, xn_list, nsg, prop_data=props, prop_reset_value=0.)
 
         # Initialize graphics
         self._show_plots = show_plots

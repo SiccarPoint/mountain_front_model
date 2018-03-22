@@ -53,9 +53,14 @@ class GrainFacetSimulator(CTSModel):
                                           plot_every_transition=False)
 
         ns = self.grid.at_node['node_state']
+        propid = np.arange(self.grid.number_of_nodes, dtype=int)
+        propdata = self.grid.at_node['props']
         self.uplifter = LatticeNormalFault(fault_x_intercept=fault_x,
                                            grid=self.grid, 
-                                           node_state=ns)
+                                           node_state=ns,
+                                           propid=propid,
+                                           prop_data=propdata,
+                                           prop_reset_value=0.)
 
     def node_state_dictionary(self):
         """
@@ -191,6 +196,7 @@ class GrainFacetSimulator(CTSModel):
             print('Running to...' + str(next_pause))
             self.ca.run(next_pause, self.ca.node_state) #, 
                    #plot_each_transition=plot_every_transition, plotter=ca_plotter)
+            self.ca.grid.at_node['props'] += 1.
             current_time = next_pause
             
             # Handle output to file
