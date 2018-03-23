@@ -22,7 +22,7 @@ class CTSModel(object):
 
     def __init__(self, grid_size=(5, 5), report_interval=5.0,
                  grid_orientation='vertical', grid_shape='rect',
-                 show_plots=False, cts_type='oriented_hex', 
+                 show_plots=False, cts_type='oriented_hex',
                  run_duration=1.0, output_interval=1.0e99,
                  plot_every_transition=False, initial_state_grid=None, **kwds):
 
@@ -34,7 +34,7 @@ class CTSModel(object):
 
     def initialize(self, grid_size=(5, 5), report_interval=5.0,
                  grid_orientation='vertical', grid_shape='rect',
-                 show_plots=False, cts_type='oriented_hex', 
+                 show_plots=False, cts_type='oriented_hex',
                  run_duration=1.0, output_interval=1.0e99,
                  plot_every_transition=False, initial_state_grid=None, **kwds):
         """Initialize CTSModel."""
@@ -51,7 +51,7 @@ class CTSModel(object):
         self.run_duration = run_duration
 
         # Create a grid
-        self.create_grid_and_node_state_field(grid_size[0], grid_size[1], 
+        self.create_grid_and_node_state_field(grid_size[0], grid_size[1],
                                               grid_orientation, grid_shape,
                                               cts_type)
 
@@ -73,21 +73,19 @@ class CTSModel(object):
         # Create the transition list
         xn_list = self.transition_list()
 
-        props = self.grid.add_zeros('node', 'props', dtype=float)
-
         # Create the CA object
         if cts_type == 'raster':
             from landlab.ca.raster_cts import RasterCTS
-            self.ca = RasterCTS(self.grid, ns_dict, xn_list, nsg, prop_data=props, prop_reset_value=0.)
+            self.ca = RasterCTS(self.grid, ns_dict, xn_list, nsg, prop_data=self.grid.at_node['props'], prop_reset_value=0.)
         elif cts_type == 'oriented_raster':
             from landlab.ca.oriented_raster_cts import OrientedRasterCTS
-            self.ca = OrientedRasterCTS(self.grid, ns_dict, xn_list, nsg, prop_data=props, prop_reset_value=0.)
+            self.ca = OrientedRasterCTS(self.grid, ns_dict, xn_list, nsg, prop_data=self.grid.at_node['props'], prop_reset_value=0.)
         elif cts_type == 'hex':
             from landlab.ca.hex_cts import HexCTS
-            self.ca = HexCTS(self.grid, ns_dict, xn_list, nsg, prop_data=props, prop_reset_value=0.)
+            self.ca = HexCTS(self.grid, ns_dict, xn_list, nsg, prop_data=self.grid.at_node['props'], prop_reset_value=0.)
         else:
             from landlab.ca.oriented_hex_cts import OrientedHexCTS
-            self.ca = OrientedHexCTS(self.grid, ns_dict, xn_list, nsg, prop_data=props, prop_reset_value=0.)
+            self.ca = OrientedHexCTS(self.grid, ns_dict, xn_list, nsg, prop_data=self.grid.at_node['props'], prop_reset_value=0.)
 
         # Initialize graphics
         self._show_plots = show_plots
@@ -95,7 +93,7 @@ class CTSModel(object):
             self.initialize_plotting(**kwds)
 
 
-    def create_grid_and_node_state_field(self, num_rows, num_cols, 
+    def create_grid_and_node_state_field(self, num_rows, num_cols,
                                          grid_orientation, grid_shape,
                                          cts_type):
         """Create the grid and the field containing node states."""
@@ -106,27 +104,28 @@ class CTSModel(object):
                                         spacing=1.0)
         else:
             from landlab import HexModelGrid
-            self.grid = HexModelGrid(num_rows, num_cols, 1.0, 
-                                     orientation=grid_orientation, 
+            self.grid = HexModelGrid(num_rows, num_cols, 1.0,
+                                     orientation=grid_orientation,
                                      shape=grid_shape)
 
         self.grid.add_zeros('node', 'node_state', dtype=int)
+        self.grid.add_zeros('node', 'props', dtype=float)
 
 
     def node_state_dictionary(self):
         """Create and return a dictionary of all possible node (cell) states.
-        
+
         This method creates a default set of states (just two); it is a
         template meant to be overridden.
         """
-        ns_dict = { 0 : 'on', 
+        ns_dict = { 0 : 'on',
                     1 : 'off'}
         return ns_dict
 
 
     def transition_list(self):
         """Create and return a list of transition objects.
-        
+
         This method creates a default set of transitions (just two); it is a
         template meant to be overridden.
         """
@@ -144,8 +143,8 @@ class CTSModel(object):
 
     def initialize_node_state_grid(self):
         """Initialize values in the node-state grid.
-        
-        This method should be overridden. The default is random "on" and "off".        
+
+        This method should be overridden. The default is random "on" and "off".
         """
         num_states = 2
         for i in range(self.grid.number_of_nodes):

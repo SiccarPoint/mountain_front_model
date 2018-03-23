@@ -20,7 +20,7 @@ class GrainFacetSimulator(CTSModel):
     """
     Model facet-slope evolution with 60-degree normal-fault slip.
     """
-    def __init__(self, grid_size, report_interval=1.0e8, run_duration=1.0, 
+    def __init__(self, grid_size, report_interval=1.0e8, run_duration=1.0,
                  output_interval=1.0e99, disturbance_rate=1.0e-6,
                  weathering_rate=1.0e-6, uplift_interval=1.0,
                  plot_interval=1.0e99, friction_coef=0.3, fault_x=1.0, **kwds):
@@ -29,9 +29,9 @@ class GrainFacetSimulator(CTSModel):
                         output_interval, disturbance_rate, weathering_rate,
                         uplift_interval, plot_interval, friction_coef, fault_x,
                         **kwds)
-        
+
     def initialize(self, grid_size, report_interval, run_duration,
-                   output_interval, disturbance_rate, weathering_rate, 
+                   output_interval, disturbance_rate, weathering_rate,
                    uplift_interval, plot_interval, friction_coef, fault_x,
                    **kwds):
         """Initialize the grain hill model."""
@@ -42,8 +42,8 @@ class GrainFacetSimulator(CTSModel):
         self.friction_coef = friction_coef
 
         # Call base class init
-        super(GrainFacetSimulator, self).initialize(grid_size=grid_size, 
-                                          report_interval=report_interval, 
+        super(GrainFacetSimulator, self).initialize(grid_size=grid_size,
+                                          report_interval=report_interval,
                                           grid_orientation='vertical',
                                           grid_shape='rect',
                                           show_plots=True,
@@ -56,7 +56,7 @@ class GrainFacetSimulator(CTSModel):
         propid = np.arange(self.grid.number_of_nodes, dtype=int)
         propdata = self.grid.at_node['props']
         self.uplifter = LatticeNormalFault(fault_x_intercept=fault_x,
-                                           grid=self.grid, 
+                                           grid=self.grid,
                                            node_state=ns,
                                            propid=propid,
                                            prop_data=propdata,
@@ -65,7 +65,7 @@ class GrainFacetSimulator(CTSModel):
     def node_state_dictionary(self):
         """
         Create and return dict of node states.
-        
+
         Overrides base-class method. Here, we simply call on a function in
         the lattice_grain module.
         """
@@ -79,16 +79,16 @@ class GrainFacetSimulator(CTSModel):
         xn_list = self.add_weathering_and_disturbance_transitions(xn_list,
                     self.disturbance_rate, self.weathering_rate)
         return xn_list
-        
+
     def add_weathering_and_disturbance_transitions(self, xn_list, d=0.0, w=0.0):
         """
         Add transition rules representing weathering and/or grain disturbance
         to the list, and return the list.
-        
+
         Parameters
         ----------
         xn_list : list of Transition objects
-            List of objects that encode information about the link-state 
+            List of objects that encode information about the link-state
             transitions. Normally should first be initialized with lattice-grain
             transition rules, then passed to this function to add rules for
             weathering and disturbance.
@@ -98,14 +98,14 @@ class GrainFacetSimulator(CTSModel):
         w : float (optional)
             Rate of transition (1/time) from fluid / rock pair to
             fluid / resting-grain pair, representing weathering.
-        
-        
+
+
         Returns
         -------
         xn_list : list of Transition objects
             Modified transition list.
         """
-        
+
         # Disturbance rule
         xn_list.append( Transition((7,0,0), (0,1,0), d, 'disturbance') )
         xn_list.append( Transition((7,0,1), (0,2,1), d, 'disturbance') )
@@ -127,20 +127,20 @@ class GrainFacetSimulator(CTSModel):
             print 'setup_transition_list(): list has',len(xn_list),'transitions:'
             for t in xn_list:
                 print '  From state',t.from_state,'to state',t.to_state,'at rate',t.rate,'called',t.name
-            
+
         return xn_list
 
     def initialize_node_state_grid(self):
         """Set up initial node states.
-        
+
         Examples
         --------
         >>> gh = GrainHill((5, 7))
-        >>> gh.grid.at_node['node_state']        
+        >>> gh.grid.at_node['node_state']
         array([8, 7, 7, 8, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         """
-        
+
         # For shorthand, get a reference to the node-state grid
         nsg = self.grid.at_node['node_state']
 
@@ -151,7 +151,7 @@ class GrainFacetSimulator(CTSModel):
                 if (self.grid.node_x[i] > 0.0 and
                     self.grid.node_x[i] < right_side_x):
                     nsg[i] = 7
-        
+
         # Place "wall" particles in the lower-left and lower-right corners
         if self.grid.number_of_node_columns % 2 == 0:
             bottom_right = self.grid.number_of_node_columns - 1
@@ -159,7 +159,7 @@ class GrainFacetSimulator(CTSModel):
             bottom_right = self.grid.number_of_node_columns // 2
         nsg[0] = 8  # bottom left
         nsg[bottom_right] = 8
-        
+
         return nsg
 
 
@@ -178,12 +178,12 @@ class GrainFacetSimulator(CTSModel):
 
         current_time = 0.0
         while current_time < self.run_duration:
-            
+
             # Figure out what time to run to this iteration
             next_pause = min(next_output, next_plot)
             next_pause = min(next_pause, next_uplift)
             next_pause = min(next_pause, self.run_duration)
-    
+
             # Once in a while, print out simulation and real time to let the user
             # know that the sim is running ok
             current_real_time = time.time()
@@ -191,20 +191,20 @@ class GrainFacetSimulator(CTSModel):
                 print('Current sim time' + str(current_time) + '(' + \
                       str(100 * current_time / self.run_duration) + '%)')
                 next_report = current_real_time + self.report_interval
-    
+
             # Run the model forward in time until the next output step
             print('Running to...' + str(next_pause))
-            self.ca.run(next_pause, self.ca.node_state) #, 
+            self.ca.run(next_pause, self.ca.node_state) #,
                    #plot_each_transition=plot_every_transition, plotter=ca_plotter)
             self.ca.grid.at_node['props'] += 1.
             current_time = next_pause
-            
+
             # Handle output to file
             if current_time >= next_output:
                 #write_output(hmg, filenm, output_iteration)
                 #output_iteration += 1
                 next_output += self.output_interval
-                
+
             # Handle plotting on display
             if current_time >= next_plot:
                 #node_state_grid[hmg.number_of_node_rows-1] = 8
@@ -217,11 +217,11 @@ class GrainFacetSimulator(CTSModel):
                 self.uplifter.do_offset(rock_state=8)
                 self.ca.update_link_states_and_transitions(current_time)
                 next_uplift += self.uplift_interval
-    
-    
+
+
     def nodes_in_column(self, col, num_rows, num_cols):
         """Return array of node IDs in given column.
-        
+
         Examples
         --------
         >>> gfs = GrainFacetSimulator((3, 5))
@@ -238,7 +238,7 @@ class GrainFacetSimulator(CTSModel):
         base_node = (col // 2) + (col % 2) * ((num_cols + 1) // 2)
         num_nodes = num_rows * num_cols
         return np.arange(base_node, num_nodes, num_cols)
-        
+
 
     def get_profile_and_soil_thickness(self):
         """Calculate and return the topographic profile and the regolith
@@ -252,7 +252,7 @@ class GrainFacetSimulator(CTSModel):
         for c in range(nc):
             e = (c%2)/2.0
             s = 0
-            r = 0 
+            r = 0
             while r<nr and data[c*nr+r]!=0:
                 e+=1
                 if data[c*nr+r]==7:
@@ -266,7 +266,7 @@ class GrainFacetSimulator(CTSModel):
 def get_params_from_input_file(filename):
     """Fetch parameter values from input file."""
     from landlab.core import load_params
-    
+
     mpd_params = load_params(filename)
 
     return mpd_params
@@ -274,7 +274,7 @@ def get_params_from_input_file(filename):
 
 def main(params):
     """Initialize model with dict of params then run it."""
-    grid_size = (int(params['number_of_node_rows']), 
+    grid_size = (int(params['number_of_node_rows']),
                  int(params['number_of_node_columns']))
     grain_facet_model = GrainFacetSimulator(grid_size, **params)
     grain_facet_model.run()
