@@ -7,11 +7,11 @@ _DEBUG = False
 
 import sys
 from cts_model import CTSModel
-from lattice_grain import (lattice_grain_node_states,
-                           lattice_grain_transition_list)
+from grainhill.lattice_grain import (lattice_grain_node_states,
+                                      lattice_grain_transition_list)
 import time
 import numpy as np
-from matplotlib.pyplot import axis
+from matplotlib.pyplot import axis, savefig
 from landlab.ca.celllab_cts import Transition
 from landlab.ca.boundaries.hex_lattice_tectonicizer import LatticeNormalFault
 
@@ -147,10 +147,10 @@ class GrainFacetSimulator(CTSModel):
         # Fill the bottom two rows with grains
         right_side_x = 0.866025403784 * (self.grid.number_of_node_columns - 1)
         for i in range(self.grid.number_of_nodes):
-            if self.grid.node_y[i] < 1.0:
+            if self.grid.node_y[i] < 2.0:
                 if (self.grid.node_x[i] > 0.0 and
                     self.grid.node_x[i] < right_side_x):
-                    nsg[i] = 7
+                    nsg[i] = 8
 
         # Place "wall" particles in the lower-left and lower-right corners
         if self.grid.number_of_node_columns % 2 == 0:
@@ -179,6 +179,20 @@ class GrainFacetSimulator(CTSModel):
         current_time = 0.0
         while current_time < self.run_duration:
 
+            print('\n Current time: ' + str(current_time))
+            print('Node state:')
+            print(self.ca.node_state)
+            for lnk in range(self.grid.number_of_links):
+                if self.grid.status_at_link[lnk] == 0:
+                    print((lnk, self.grid.node_at_link_tail[lnk],
+                           self.grid.node_at_link_head[lnk],
+                           self.ca.node_state[self.grid.node_at_link_tail[lnk]],
+                           self.ca.node_state[self.grid.node_at_link_head[lnk]],
+                           self.ca.link_state[lnk],self.ca.next_update[lnk],
+                           self.ca.next_trn_id[lnk]))
+            print('PQ:')
+            print(self.ca.priority_queue._queue)
+
             # Figure out what time to run to this iteration
             next_pause = min(next_output, next_plot)
             next_pause = min(next_pause, next_uplift)
@@ -194,9 +208,7 @@ class GrainFacetSimulator(CTSModel):
 
             # Run the model forward in time until the next output step
             print('Running to...' + str(next_pause))
-            self.ca.run(next_pause, self.ca.node_state) #,
-                   #plot_each_transition=plot_every_transition, plotter=ca_plotter)
-            self.ca.grid.at_node['props'] += 1.
+            self.ca.run(next_pause, self.ca.node_state, plot_each_transition=True, plotter=self.ca_plotter)
             current_time = next_pause
 
             # Handle output to file
@@ -211,12 +223,16 @@ class GrainFacetSimulator(CTSModel):
                 self.ca_plotter.update_plot()
                 axis('off')
                 next_plot += self.plot_interval
+                savefig('test' + str(int(current_time)) + '.png')
 
             # Handle fault slip
             if current_time >= next_uplift:
-                self.uplifter.do_offset(rock_state=8)
-                self.ca.update_link_states_and_transitions(current_time)
+                self.uplifter.do_offset(ca=self.ca, current_time=current_time,
+                                        rock_state=8)
+                #self.ca.update_link_states_and_transitions(current_time)
                 next_uplift += self.uplift_interval
+                print('***JUST DID UPLIFT***')
+
 
 
     def nodes_in_column(self, col, num_rows, num_cols):
